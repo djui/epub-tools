@@ -1,0 +1,23 @@
+#!/bin/sh
+
+if [ -z "$1" ] ; then
+    echo "Usage: txt2m4b FILE"
+    echo
+    echo "Convert a text file (.txt) into an audiobook (.m4b)."
+    echo "Requires \`say\` (OS X)"
+    echo
+    echo "Example:"
+    echo
+    echo "    \$ find . -name '*.txt' -exec txt2m4b {} \;"
+    exit 1
+fi
+
+TXT2M4B_CMD="say"
+RATE=220
+VOICE=Ava
+
+IN="$1"
+OUT="${IN%.*}.m4b"
+
+echo "[txt2m4b] Converting $IN"
+$TXT2M4B_CMD -v $VOICE -r $RATE -o "$OUT" -f "$IN"

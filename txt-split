@@ -1,0 +1,67 @@
+#!/usr/bin/env python3
+
+import os
+import re
+import sys
+
+
+def print_info(msg):
+    prog = os.path.basename(sys.argv[0])
+    print('[' + prog + ']', msg)
+
+
+def mean(data):
+    return sum(data) / float(len(data))
+
+
+def stddev(data):
+    c = mean(data)
+    ss = sum((x - c) ** 2 for x in data)
+    return ss / float(len(data))
+
+
+def split_chapters(text, pattern):
+    splitter = re.compile(pattern)
+    return splitter.split(text)
+
+
+def rename(old_path, new_basename):
+    dirname = os.path.dirname(old_path)
+    _, ext = os.path.splitext(old_path)
+    return os.path.join(dirname, new_basename + ext)
+
+
+def usage(prog):
+    print('Usage: txt-split FILE [SPLITTER]')
+    print()
+    print('Splits a text file given a regexp SPLITTER into separated files.')
+    print('SPLITTER by default is "\\nchapter\\s+\\d+\\n\\n".')
+
+    
+def main(args):
+    if not len(args):
+        usage() and sys.exit(1)
+    
+    in_path = os.path.abspath(args[0])
+    pattern = args[1] if len(args) >= 2 else '\nchapter\s+\d+\n\n'
+    
+    text = open(in_path).read()
+    chapters = split_chapters(text, pattern)
+    data = [len(c) for c in chapters]
+    
+    print_info('Detected {} chapters (σ={:.0f}, μ={:.0f})'.format(len(data), stddev(data), mean(data)))
+    print_info('Writing chapter files to: {}'.format(os.path.dirname(in_path)))
+    
+    for i, chapter in enumerate(chapters):
+        out_path = rename(in_path, 'Chapter {:d}'.format(i))
+        with open(out_path, 'w') as f:
+            f.write(chapter + '\n')
+
+    print_info('Done.')
+
+
+if __name__ == '__main__':
+    try:
+        main(sys.argv[1:])
+    except KeyboardInterrupt:
+        sys.exit(1)

@@ -1,0 +1,74 @@
+#!/usr/bin/env python3
+
+# pip3 install requests beautifulsoup4
+from bs4 import BeautifulSoup
+import os
+import requests
+import sys
+import urllib
+
+def search_cover_page_url(text):
+    query = '{} audiobook'.format(text)
+    url = 'http://www.audible.com/search/'
+    r = requests.get(url, {'advsearchKeywords': query})
+    dom = BeautifulSoup(r.text, 'html.parser')
+    pages = [a['href'] for a in dom.find_all("a", class_='adbl-link')]
+    for p in pages:
+        p = p.strip()
+        if p.startswith('/pd/'):
+            return p
+    return None
+
+
+def find_cover_url(cover_page_url):
+    url = 'http://www.audible.com' + cover_page_url
+    r = requests.get(url)
+    dom = BeautifulSoup(r.text, 'html.parser')
+    image = dom.find(id="productImage")
+    return image['src'].replace('.SL300_', '') if image else None
+
+
+def get_cover(cover_url):
+    r = requests.get(cover_url)
+    return r.content
+
+
+def print_info(msg):
+    print('[fetch-cover]', msg)
+
+
+def main(args):
+    if not len(args):
+        sys.exit('Usage: fetch-cover TITLE')
+
+    text = args[0]
+    
+    print('[fetch-cover] Fetching image results for {}'.format(text))
+    cover_page_url = search_cover_page_url(text)
+    if not cover_page_url:
+        print_info('No image found.')
+        sys.exit(1)
+
+    cover_url = find_cover_url(cover_page_url)
+    if not cover_url:
+        print_info('No image found.')
+        sys.exit(2)
+
+    cover = get_cover(cover_url)
+    if not cover:
+        print_info('No image found.')
+        sys.exit(3)
+        
+    out_path = os.path.abspath('cover.jpg')
+    print_info('Downloading image to {}'.format(out_path))
+
+    with open(out_path, 'wb') as f:
+        f.write(cover)
+        print_info('Done.')
+    
+
+if __name__ == '__main__':
+    try:
+        main(sys.argv[1:])
+    except KeyboardInterrupt:
+        sys.exit(1)

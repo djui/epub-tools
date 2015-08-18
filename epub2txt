@@ -1,0 +1,21 @@
+#!/bin/sh
+
+if [ -z "$1" ] ; then
+    echo "Usage: epub2txt FILE"
+    echo "Convert an EPUB file (.epub) into a text file (.txt)."
+    echo "Requires Calibre.app"
+    exit 1
+fi
+
+EPUB2TXT_CMD="/Applications/calibre.app/Contents/console.app/Contents/MacOS/ebook-convert"
+
+IN="$1"
+OUT="${IN%.*}.txt"
+
+echo "[epub2txt] Converting EPUB to TXT..."
+$EPUB2TXT_CMD "$IN" "$OUT" --pretty-print --max-line-length 80
+if [ $? = "0" ] ; then
+    echo "[epub2txt] Done."
+else
+    echo "[epub2txt] Something went wrong."
+fi
